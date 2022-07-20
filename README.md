@@ -4,3 +4,4 @@ This is the start of the project. Team members include:
 
 - Prof. H
 - Zoe
+- Connor

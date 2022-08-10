@@ -77,12 +77,10 @@ class JSON(object):
         
         for d in attribute_data:
             if (not(fields)): 
-                print("fields are empty")
                 if (not(values) and not(spec_field)):
                     relevant_data.append(d)
     
             else:
-                print("fields are not empty")
                 if (self.__check_fields(fields, d) == False): continue
                 else:
                     if (not(values) and not(spec_field)):

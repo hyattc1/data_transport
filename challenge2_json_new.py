@@ -93,9 +93,10 @@ class JSON(object):
                                 break
 
         # Detail which values if any were missing from data
-        for val in values:
-            if (val not in values_found):
-                print("The value", val, "for field ", spec_field, " was not found given all specified fields")
+        if (values):
+            for val in values:
+                if (val not in values_found):
+                    print("The value", val, "for field ", spec_field, " was not found given all specified fields")
 
         return relevant_data
 

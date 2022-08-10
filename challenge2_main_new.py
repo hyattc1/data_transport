@@ -11,7 +11,7 @@ values1 = [49, 7, 26, 33]
 values2 = []
 values3 = [22]
 values4 = ["reputational", "random"]
-values5 = []
+values5 = None
 values6 = [49, 21, 7, 30]
 
 trials = JSON("trials.json")

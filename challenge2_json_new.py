@@ -10,6 +10,11 @@ import csv
 
 class JSON(object):
     def __init__(self, input_filename):
+
+        # Check if valid file has been passed - must be .json
+        if (not (input_filename[-5:] == '.json')): 
+            raise Exception("Incorrect file type passed - must be .json")
+
         self.filename = input_filename
         self.data = None
         
@@ -17,8 +22,16 @@ class JSON(object):
         with open(self.filename) as f:
             self.data = json.load(f)
         
+        # Checking if json file is empty array
+        if (self.data == []):
+            raise Exception("Empty json file passed")
+
         #makes data a dictionary instead of a one element list
         self.data = self.data[0]
+
+        # Checking if dictionary is empty
+        if (len(self.data) == 0):
+            raise Exception("No data found in Json file dictionary")        
     
     def __check_fields_helper(self, field, curr_dict):
         for key in curr_dict:
@@ -57,17 +70,35 @@ class JSON(object):
         attribute_data = self.data[attribute]
 
         relevant_data = []
+        values_found = set()
 
+        if ((not(values) and spec_field) or (not(spec_field) and values)):
+            raise Exception("Specifications for specific field and values must match")
+        
         for d in attribute_data:
-            if (self.__check_fields(fields, d) == False): continue
-            else:
-                if (not(values == [] or values == ["all"])):
-                    for val in values:
-                        if (self.__check_val_field(val, spec_field, d)): 
-                            relevant_data.append(d)
-                            break
-                else:
+            if (not(fields)): 
+                print("fields are empty")
+                if (not(values) and not(spec_field)):
                     relevant_data.append(d)
+    
+            else:
+                print("fields are not empty")
+                if (self.__check_fields(fields, d) == False): continue
+                else:
+                    if (not(values) and not(spec_field)):
+                        relevant_data.append(d)
+                    else:
+                        for val in values:
+                            if (self.__check_val_field(val, spec_field, d)): 
+                                relevant_data.append(d)
+                                values_found.add(val)
+                                break
+
+        # Detail which values if any were missing from data
+        for val in values:
+            if (val not in values_found):
+                print("The value", val, "for field ", spec_field, " was not found given all specified fields")
+
         return relevant_data
 
     def __dict_info_helper(self, field, curr_dict, dict_info):
@@ -87,20 +118,58 @@ class JSON(object):
             dict_info = self.__dict_info_helper(field, curr_dict, dict_info)
         return dict_info
     
-    def write_csv(self, attribute, fields, values, spec_field, output_filename):
+    def __find_fields_dict(self, curr_dict, fields):
+        # Accepts an empty set of fields at the start
+        for key in curr_dict:
+            if (type(curr_dict[key]) != dict):
+                fields.add(key)
+            else:
+                fields = self.__find_fields_dict(curr_dict[key], fields)
+        return fields
+
+    def __gather_common_fields(self, attribute, values, spec_field):
+        
+        field_sets = []
+        fields_list = []
+        fields_intersection = set()
+        attribute_data = self.data[attribute]
+
+        if ((not(values) and spec_field) or (not(spec_field) and values)):
+            raise Exception("Specifications for specific field and values must match")
+        
+        if (not(values) and not(spec_field)):
+            for d in attribute_data:
+                field_sets.append(self.__find_fields_dict(d, set()))
+            fields_intersection = set.intersection(*field_sets)
+        else:
+            for d in attribute_data:
+                for val in values:
+                    if (self.__check_val_field(val, spec_field, d)):
+                        field_sets.append(self.__find_fields_dict(d, set()))
+            fields_intersection = set.intersection(*field_sets)
+
+        for f in fields_intersection:
+            fields_list.append(f)
+        return fields_list
+
+    def write_csv(self, attribute, fields_list, values, spec_field, output_filename):
         # Only method public to user and can be accessed
         # Creates a csv of data pertaining to user specifications
 
         self.__loadData()
 
+        # If no fields are specified, data for all fields must be extracted
+        if (not(fields_list)):
+            fields_list = self.__gather_common_fields(attribute, values, spec_field)
+
+        fields = set()
+        for f in fields_list:
+            fields.add(f)
+
         relevant_data = self.__get_data(attribute, fields, values, spec_field)
         
         if (len(relevant_data) == 0):
-            raise Exception("Data as per specifications not found")
-
-        fields_list = []
-        for field in fields:
-            fields_list.append(field)
+            raise Exception("No data as per specifications found")
 
         with open(output_filename, "w", newline="") as file:
             writer = csv.writer(file)
@@ -108,7 +177,7 @@ class JSON(object):
             info = []
             
             for d in relevant_data:
-                info.append(self.__get_dict_info(fields_list, d))
+                info.append(self.__get_dict_info(headers, d))
 
             writer.writerow(headers)
             writer.writerows(info)

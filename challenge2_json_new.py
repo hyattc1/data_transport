@@ -157,6 +157,34 @@ class JSON(object):
 
         self.__loadData()
 
+        # Checking that output file is not None
+        if (not(output_filename)):
+            raise Exception("Please provide output file")
+
+        # Checking that attribute is not None
+        if (not(attribute)):
+            raise Exception("Please provide attribute")
+
+        # Checking for proper types: 
+        if (not (type(attribute) == str)):
+            raise Exception("Incorrect type for parameter")
+
+        if (not (type(fields_list) == list)):
+            raise Exception("Incorrect type for parameter")
+
+        for field in fields_list:
+            if (not (type(field) == str) and field != None):
+                raise Exception("Incorrect type for parameter")
+
+        if (not (type(values) == list) and values != None):
+            raise Exception("Incorrect type for parameter")
+
+        if (not (type(spec_field) == str) and spec_field != None):
+            raise Exception("Incorrect type for parameter")
+
+        if (not (type(output_filename) == str)):
+            raise Exception("Incorrect type for parameter")
+
         # If no fields are specified, data for all fields must be extracted
         if (not(fields_list)):
             fields_list = self.__gather_common_fields(attribute, values, spec_field)

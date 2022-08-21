@@ -1,5 +1,6 @@
 import json
 import csv
+from exceptions import *
 
 # Helpful notes to self:
 
@@ -13,7 +14,8 @@ class JSON(object):
 
         # Check if valid file has been passed - must be .json
         if (not (input_filename[-5:] == '.json')): 
-            raise Exception("Incorrect file type passed - must be .json")
+            #raise Exception("Incorrect file type passed - must be .json")
+            raise Invalid_File_Extension
 
         self.filename = input_filename
         self.data = None
@@ -24,14 +26,16 @@ class JSON(object):
         
         # Checking if json file is empty array
         if (self.data == []):
-            raise Exception("Empty json file passed")
+            #raise Exception("Empty json file passed")
+            raise Empty_JSON_File
 
         #makes data a dictionary instead of a one element list
         self.data = self.data[0]
 
         # Checking if dictionary is empty
         if (len(self.data) == 0):
-            raise Exception("No data found in Json file dictionary")        
+            #raise Exception("No data found in Json file dictionary")
+            raise Empty_JSON_File_Dictionary        
     
     def __check_fields_helper(self, field, curr_dict):
         for key in curr_dict:
@@ -67,14 +71,19 @@ class JSON(object):
         # Specific fields data is compiled for
         # Specify a list of values for a particular field
 
+        # Checking that attribute exists in Json dictionary
+        if (attribute not in self.data):
+            raise Non_Existent_Attribute
+
         attribute_data = self.data[attribute]
 
         relevant_data = []
         values_found = set()
 
         if ((not(values) and spec_field) or (not(spec_field) and values)):
-            raise Exception("Specifications for specific field and values must match")
-        
+            #raise Exception("Specifications for specific field and values must match")
+            raise Values_Specific_Field_Mismatch
+
         for d in attribute_data:
             if (not(fields)): 
                 if (not(values) and not(spec_field)):
@@ -96,7 +105,7 @@ class JSON(object):
         if (values):
             for val in values:
                 if (val not in values_found):
-                    print("The value", val, "for field ", spec_field, " was not found given all specified fields")
+                    print("\n The value", val, "for field ", spec_field, " was not found given all specified fields \n")
 
         return relevant_data
 
@@ -134,8 +143,9 @@ class JSON(object):
         attribute_data = self.data[attribute]
 
         if ((not(values) and spec_field) or (not(spec_field) and values)):
-            raise Exception("Specifications for specific field and values must match")
-        
+            #raise Exception("Specifications for specific field and values must match")
+            raise Values_Specific_Field_Mismatch
+
         if (not(values) and not(spec_field)):
             for d in attribute_data:
                 field_sets.append(self.__find_fields_dict(d, set()))
@@ -159,31 +169,39 @@ class JSON(object):
 
         # Checking that output file is not None
         if (not(output_filename)):
-            raise Exception("Please provide output file")
+            #raise Exception("Please provide output file")
+            raise Empty_Output_Filename
 
         # Checking that attribute is not None
         if (not(attribute)):
-            raise Exception("Please provide attribute")
+            #raise Exception("Please provide attribute")
+            raise Empty_Attribute
 
         # Checking for proper types: 
         if (not (type(attribute) == str)):
-            raise Exception("Incorrect type for parameter")
+            #raise Exception("Incorrect type for parameter")
+            raise Attribute_Not_Type_String
 
         if (not (type(fields_list) == list)):
-            raise Exception("Incorrect type for parameter")
+            #raise Exception("Incorrect type for parameter")
+            raise Fields_List_Not_Type_List
 
         for field in fields_list:
             if (not (type(field) == str) and field != None):
-                raise Exception("Incorrect type for parameter")
+                #raise Exception("Incorrect type for parameter")
+                raise Fields_Not_Type_String
 
         if (not (type(values) == list) and values != None):
-            raise Exception("Incorrect type for parameter")
+            #raise Exception("Incorrect type for parameter")
+            raise Values_Not_Type_List
 
         if (not (type(spec_field) == str) and spec_field != None):
-            raise Exception("Incorrect type for parameter")
+            #raise Exception("Incorrect type for parameter")
+            raise Specific_Field_Not_Type_String
 
         if (not (type(output_filename) == str)):
-            raise Exception("Incorrect type for parameter")
+            #raise Exception("Incorrect type for parameter")
+            raise Output_Filename_Not_Type_String
 
         # If no fields are specified, data for all fields must be extracted
         if (not(fields_list)):
@@ -196,7 +214,8 @@ class JSON(object):
         relevant_data = self.__get_data(attribute, fields, values, spec_field)
         
         if (len(relevant_data) == 0):
-            raise Exception("No data as per specifications found")
+            #raise Exception("No data as per specifications found")
+            raise No_Data_Found
 
         with open(output_filename, "w", newline="") as file:
             writer = csv.writer(file)
